@@ -6,6 +6,32 @@ declare_id!("coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF");
 
 #[program]
 pub mod votingdapp {
+  use super::*;
+
+  pub fn initialize_poll(ctx: Context<InitializePoll>, 
+                         poll_id:u64,
+                         poll_description: String,
+                         poll_start: u64,
+                         poll_end: u64) -> Result<()> {
+          let poll = &mut ctx.accounts.poll;
+          poll.poll_id = poll_id;
+          poll.poll_description = poll_description;
+          poll.poll_start = poll_start;
+          poll.poll_end = poll_end;
+          poll.candidate_amount = 0;
+          msg!("Poll initialized");
+    Ok(())
+  }
+  // pub fn decrement(ctx: Context<Update>) -> Result<()> {
+  //   ctx.accounts.votingdapp.count = ctx.accounts.votingdapp.count.checked_sub(1).unwrap();
+  //   Ok(())
+  // }
+  // pub fn increment(ctx: Context<Update>) -> Result<()> {
+  //   ctx.accounts.votingdapp.count = ctx.accounts.votingdapp.count.checked_add(1).unwrap();
+  //   Ok(())
+  // }
+
+  /*
     use super::*;
 
   pub fn close(_ctx: Context<CloseVotingdapp>) -> Result<()> {
@@ -30,8 +56,36 @@ pub mod votingdapp {
     ctx.accounts.votingdapp.count = value.clone();
     Ok(())
   }
+  */
+}
+// The `InitializePoll` struct is used to define the accounts required for the `initialize_poll` function.
+#[derive(Accounts)]
+#[instruction(poll_id: u64)] // To pull the poll_id from the transaction
+pub struct InitializePoll<'info> {
+  #[account(mut)]
+  pub payer: Signer<'info>,
+  #[account(
+  init, // To create a new account/initialize it
+  space = 8 + Poll::INIT_SPACE,
+  payer = payer,
+  seeds = [&poll_id.to_le_bytes()], // Use the poll_id as a seed
+  bump,
+  )]
+  pub poll: Account<'info, Poll>,
+  pub system_program: Program<'info, System>,
 }
 
+#[account]
+#[derive(InitSpace)] // This macro will generate the `INIT_SPACE` constant for us. Automatically calculates the size of the struct.
+pub struct Poll {
+  pub poll_id: u64,
+  #[max_len(200)]
+  pub poll_description: String,
+  pub poll_start: u64,
+  pub poll_end: u64,
+  pub candidate_amount: u64,
+}
+/*
 #[derive(Accounts)]
 pub struct InitializeVotingdapp<'info> {
   #[account(mut)]
@@ -68,3 +122,4 @@ pub struct Update<'info> {
 pub struct Votingdapp {
   count: u8,
 }
+*/
