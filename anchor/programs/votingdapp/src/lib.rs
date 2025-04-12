@@ -25,12 +25,22 @@ pub mod votingdapp {
 
   pub fn initialize_candidate(ctx: Context<InitializeCandidate>, 
     candidate_name: String,
-    _poll_id:u64,
+    poll_id:u64,
     ) -> Result<()> {
+let candidate = &mut ctx.accounts.candidate;
 let poll = &mut ctx.accounts.poll;
-msg!("Poll initialized");
+poll.candidate_amount += 1;
+candidate.candidate_name = candidate_name;
+candidate.candidate_votes = 0;
+msg!("Candidate initialized");
 Ok(())
 }
+
+  pub fn vote(ctx: Context<Vote>, candidate_name: String, _poll_id:u64)->Result<()>{
+    let candidate = &mut ctx.accounts.candidate;
+    candidate.candidate_votes += 1;
+    Ok(())
+  }
 
 
   // pub fn decrement(ctx: Context<Update>) -> Result<()> {
@@ -71,11 +81,29 @@ Ok(())
 }
 
 #[derive(Accounts)]
+#[instruction(candidate_name: String, poll_id: u64)]
+pub struct Vote<'info>{
+  pub payer: Signer<'info>,
+  #[account(
+  seeds = [&poll_id.to_le_bytes()], // Use the poll_id as a seed
+  bump,
+  )]
+  pub poll: Account<'info, Poll>,
+
+  #[account(mut,
+  seeds = [&poll_id.to_le_bytes(), candidate_name.as_bytes()], // Use the poll_id and candidate_name as a seed
+  bump,
+  )]
+  pub candidate: Account<'info, Candidate>,
+  
+}
+
+#[derive(Accounts)]
 #[instruction(candidate_name: String, poll_id: u64)] // To pull the poll_id from the transaction
 pub struct InitializeCandidate<'info> {
   #[account(mut)]
   pub payer: Signer<'info>,
-  #[account(
+  #[account(mut,
   seeds = [&poll_id.to_le_bytes()], // Use the poll_id as a seed
   bump,
   )]

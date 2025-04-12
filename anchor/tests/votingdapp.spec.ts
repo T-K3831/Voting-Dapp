@@ -4,6 +4,7 @@ import { Keypair } from '@solana/web3.js'
 import { Votingdapp } from '../target/types/votingdapp'
 import { startAnchor} from 'solana-bankrun'
 import { BankrunProvider} from 'anchor-bankrun'
+import { utf8 } from '@coral-xyz/anchor/dist/cjs/utils/bytes'
 const IDL = require('../target/idl/votingdapp.json')
 //IDL : Interface to build/generate language specific format for calling smart contracts.
 //Before running/implenting test, need to copy target/deploy/abc.so file to tests in fixtures folder(need to create it)
@@ -77,14 +78,35 @@ describe('votingdapp', () => {
         ],
         votingAddress
       );
+      console.log("Karachi Address: ", KarachiAddress.toString());
+      console.log("Lahore Address: ", LahoreAddress.toString());
       const KarachiCandidate = await votingProgram.account.candidate.fetch(KarachiAddress);
       const LahoreCandidate = await votingProgram.account.candidate.fetch(LahoreAddress);
+      console.log("Karachi Candidate Account: ", KarachiCandidate);
+      console.log("Lahore Candidate Account: ", LahoreCandidate);
+      expect(KarachiCandidate.candidateName).toEqual("Karachi");
+      expect(LahoreCandidate.candidateName).toEqual("Lahore");
       
 
   });
 
   it("Vote", async () => {
-    
+    await votingProgram.methods
+    .vote(
+      "Lahore",
+        new anchor.BN(1),
+    )
+    .rpc();
+    const [LahoreAddress] = anchor.web3.PublicKey.findProgramAddressSync(
+      [
+        new anchor.BN(1).toArrayLike(Buffer, "le", 8),
+        Buffer.from("Lahore"),
+      ],
+      votingAddress
+    );
+    const LahoreCandidate = await votingProgram.account.candidate.fetch(LahoreAddress);
+    console.log("Lahore : {}", LahoreCandidate);
+    expect(LahoreCandidate.candidateVotes.toNumber()).toEqual(1);
   });
 
 })
