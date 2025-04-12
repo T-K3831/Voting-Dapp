@@ -13,14 +13,20 @@ const IDL = require('../target/idl/votingdapp.json')
 const votingAddress = new anchor.web3.PublicKey("coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF");
 describe('votingdapp', () => {
   // Configure the client to use the local cluster.
-  it('Initialize Poll', async () => {
-    const context = await startAnchor("", [{name: "votingdapp", programId: votingAddress}], []);
-	const provider = new BankrunProvider(context);
+  let context;
+  let provider;
+  let votingProgram: anchor.Program<Votingdapp>;
+  beforeAll(async () => {
+     context = await startAnchor("", [{name: "votingdapp", programId: votingAddress}], []);
+	   provider = new BankrunProvider(context);
 //Program Object
-  const votingProgram = new Program<Votingdapp>(
+     votingProgram = new Program<Votingdapp>(
 		IDL,
 		provider,
 	)
+  });
+  it('Initialize Poll', async () => {
+    
    await votingProgram.methods
     .initializePoll(
       new anchor.BN(1),
@@ -42,6 +48,43 @@ describe('votingdapp', () => {
     expect(pollAccount.pollId.toString()).toEqual("1");
     expect(pollAccount.pollDescription).toEqual("Karachi vs Lahore");
     expect(pollAccount.pollStart.toNumber()).toBeLessThan(pollAccount.pollEnd.toNumber());
-  })
+  });
+
+  it("Initialize Candidate", async () => {
+    await votingProgram.methods
+      .initializeCandidate(
+        "Karachi",
+        new anchor.BN(1),
+      ).rpc();
+
+    await votingProgram.methods
+      .initializeCandidate(
+        "Lahore",
+        new anchor.BN(1),
+      ).rpc();
+      
+      const [KarachiAddress] = anchor.web3.PublicKey.findProgramAddressSync(
+        [
+          new anchor.BN(1).toArrayLike(Buffer, "le", 8),
+          Buffer.from("Karachi"),
+        ],
+        votingAddress
+      );
+      const [LahoreAddress] = anchor.web3.PublicKey.findProgramAddressSync(
+        [
+          new anchor.BN(1).toArrayLike(Buffer, "le", 8),
+          Buffer.from("Lahore"),
+        ],
+        votingAddress
+      );
+      const KarachiCandidate = await votingProgram.account.candidate.fetch(KarachiAddress);
+      const LahoreCandidate = await votingProgram.account.candidate.fetch(LahoreAddress);
+      
+
+  });
+
+  it("Vote", async () => {
+    
+  });
 
 })

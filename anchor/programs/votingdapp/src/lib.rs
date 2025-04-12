@@ -22,6 +22,17 @@ pub mod votingdapp {
           msg!("Poll initialized");
     Ok(())
   }
+
+  pub fn initialize_candidate(ctx: Context<InitializeCandidate>, 
+    candidate_name: String,
+    _poll_id:u64,
+    ) -> Result<()> {
+let poll = &mut ctx.accounts.poll;
+msg!("Poll initialized");
+Ok(())
+}
+
+
   // pub fn decrement(ctx: Context<Update>) -> Result<()> {
   //   ctx.accounts.votingdapp.count = ctx.accounts.votingdapp.count.checked_sub(1).unwrap();
   //   Ok(())
@@ -58,6 +69,37 @@ pub mod votingdapp {
   }
   */
 }
+
+#[derive(Accounts)]
+#[instruction(candidate_name: String, poll_id: u64)] // To pull the poll_id from the transaction
+pub struct InitializeCandidate<'info> {
+  #[account(mut)]
+  pub payer: Signer<'info>,
+  #[account(
+  seeds = [&poll_id.to_le_bytes()], // Use the poll_id as a seed
+  bump,
+  )]
+  pub poll: Account<'info, Poll>,
+
+  #[account(
+  init, // To create a new account/initialize it
+  space = 8 + Candidate::INIT_SPACE,
+  payer = payer,
+  seeds = [&poll_id.to_le_bytes(), candidate_name.as_bytes()], // Use the poll_id and candidate_name as a seed
+  bump,
+  )]
+  pub candidate: Account<'info, Candidate>,
+  pub system_program: Program<'info, System>,
+}
+
+#[account]
+#[derive(InitSpace)] // This macro will generate the `INIT_SPACE` constant for us. Automatically calculates the size of the struct.
+pub struct Candidate {
+  #[max_len(80)]
+  pub candidate_name: String,
+  pub candidate_votes: u64,
+}
+
 // The `InitializePoll` struct is used to define the accounts required for the `initialize_poll` function.
 #[derive(Accounts)]
 #[instruction(poll_id: u64)] // To pull the poll_id from the transaction
