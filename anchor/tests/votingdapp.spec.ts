@@ -11,20 +11,21 @@ const IDL = require('../target/idl/votingdapp.json')
 //So that test know what smart contract to use.
 // Context + Provider allows to interact with the Smart Contract.
 
-const votingAddress = new anchor.web3.PublicKey("coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF");
+const votingAddress = new anchor.web3.PublicKey("EVSDHkE99MKm9erQsbxFVogcEYcEf1UyfEqNpf9fUm1B");
 describe('votingdapp', () => {
   // Configure the client to use the local cluster.
   let context;
   let provider;
-  let votingProgram: anchor.Program<Votingdapp>;
+  anchor.setProvider(anchor.AnchorProvider.env());
+  let votingProgram = anchor.workspace.votingdapp as Program<Votingdapp>;
   beforeAll(async () => {
-     context = await startAnchor("", [{name: "votingdapp", programId: votingAddress}], []);
-	   provider = new BankrunProvider(context);
-//Program Object
-     votingProgram = new Program<Votingdapp>(
-		IDL,
-		provider,
-	)
+   /*   context = await startAnchor("", [{name: "votingdapp", programId: votingAddress}], []);
+ 	   provider = new BankrunProvider(context);
+ //Program Object
+      votingProgram = new Program<Votingdapp>(
+ 		IDL,
+ 		provider,
+ 	)*/
   });
   it('Initialize Poll', async () => {
     
